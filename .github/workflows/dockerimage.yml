@@ -8,4 +8,12 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build the Docker image
-      run: ./containerize.sh -s
+      run: ./containerize.sh
+    - name: Set Image Tag
+      run: export IMAGE_TAG=$(./containerize.sh -q)
+    - name: Build image from image
+      run: time docker run --rm  --init -it \
+             -v /var/run/docker.sock:/var/run/docker.sock \
+             -v $pwd:$pwd --workdir=$PWD \
+             -e GITHUB_TOKEN \
+             $IMAGE_TAG'
