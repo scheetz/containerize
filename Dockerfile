@@ -13,6 +13,7 @@ RUN apk add --no-cache --update \
     moreutils \
     openssh \
     python3 \
+    py3-pip \
     tar \
     unzip
 
