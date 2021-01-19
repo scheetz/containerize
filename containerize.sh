@@ -188,7 +188,13 @@ login() {
     if [ "$is_aws" = true ]; then
         login_aws_create_repo "$registry" "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY" "$repo" "$region"
     else
-        login_reg_create_repo "$registry" "$DOCKER_USR" "$DOCKER_PW" "$repo"
+        (
+        set +e
+        login_reg "$registry" "$DOCKER_USR" "$DOCKER_PW"
+        if [[ $? -ne 0 ]]; then
+            login_reg_create_repo "$registry" "$DOCKER_USR" "$DOCKER_PW" "$repo"
+        fi
+        )
     fi
 }
 
@@ -209,7 +215,7 @@ login_reg() {
     fi
 
     echo "Attempt login to $registry"
-    docker login -u "$docker_user" -p "$docker_pw" "$registry"
+    login=$(echo "$docker_pw" | docker login -u "$docker_user" --password-stdin "$registry")
 }
 
 login_reg_create_repo() {
@@ -232,7 +238,7 @@ login_reg_create_repo() {
     fi
 
     echo "Attempt login to $registry"
-    login=$(docker login -u "$docker_user" -p "$docker_pw" "$registry")
+    login=$(echo "$docker_pw" | docker login -u "$docker_user" --password-stdin "$registry")
     if [ $? -ne 0 ]; then
         return 1
     fi
@@ -360,9 +366,11 @@ publish () {
     local registry
     local branch
     local version2
+    local image_name
     registry_info="$1"
     repo="$2"
     version="$3"
+    image_name=
     registry=$(echo "$registry_info" | jq -r .uri)
 
     export_image $repo:$version
@@ -372,16 +380,25 @@ publish () {
         return
     fi
 
-    docker tag $repo:$version $registry/$repo:$version > /dev/null
-    docker push $registry/$repo:$version > /dev/null && echo "Published $registry/$repo:$version"
-    docker rmi $registry/$repo:$version > /dev/null || true
+    if [[ "$registry" =~ "github.com" ]]; then
+      # TODO: use Dockerfile extension
+      image_name="/${repo##*/}"
+    fi
+
+    if [[ "$registry" =~ "https://" ]]; then
+      registry=$(sed -e"s|https://||g" <<< $registry)
+    fi
+
+    docker tag $repo:$version $registry/${repo}${image_name}:$version > /dev/null
+    docker push $registry/$repo${image_name}:$version > /dev/null && echo "Published $registry/$repo${image_name}:$version"
+    docker rmi $registry/$repo${image_name}:$version > /dev/null || true
 
     branch="${version%%-*}"
     version2="${version/$branch/latest}"
     if [ "$branch" = "master" ] ; then
-        docker tag $repo:$version $registry/$repo:$version2 > /dev/null
-        docker push $registry/$repo:$version2 > /dev/null && echo "Published $registry/$repo:$version2"
-        docker rmi $registry/$repo:$version2 > /dev/null || true
+        docker tag $repo:$version $registry/$repo${image_name}:$version2 > /dev/null
+        docker push $registry/$repo${image_name}:$version2 > /dev/null && echo "Published $registry/$repo${image_name}:$version2"
+        docker rmi $registry/$repo${image_name}:$version2 > /dev/null || true
    fi
 }
 

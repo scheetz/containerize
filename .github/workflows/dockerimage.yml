@@ -7,5 +7,27 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
+    - name: Install jq
+      run: |
+        sudo apt-get update
+        sudo apt-get install --yes jq
+    - name: Create Registry File
+      run: |
+        export REGISTRY=$(cat <<EOF | jq '.'
+        {"registries": [
+          {"uri": "https://docker.pkg.github.com",
+            "secrets": 
+              {"DOCKER_USR": "\$GITHUB_ACTOR",
+              "DOCKER_PW": "\$GH_TOKEN"}
+        }]}
+        EOF
+        )
+        echo $REGISTRY
+        echo $REGISTRY > registry.json
+    - name: Show Registry Info
+      run: cat registry.json  
     - name: Build the Docker image
-      run: ./containerize.sh
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        ./containerize.sh -p -f registry.json
