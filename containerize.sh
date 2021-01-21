@@ -55,7 +55,8 @@ name_version() {
       version=pr${CIRCLE_PULL_REQUEST##*/}
     fi
     if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
-      version=pr$(echo ${GITHUB_REF} | sed -i -e 's|/merge||g' -e 's|refs/pull/||g')
+      local pr_id=$(echo ${GITHUB_REF} | sed -e 's|/merge||g' -e 's|refs/pull/||g')
+      version=pr${pr_id}
     fi
     if [ -z $version ] ; then
       version=$(echo $DRONE_TAG | xargs)
