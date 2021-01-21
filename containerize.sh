@@ -64,13 +64,13 @@ name_version() {
     if [ -z $version ] ; then
       version=$(echo $CIRCLE_TAG | xargs)
     fi
-    if [ -z $version ] && [ "$GITHUB_REF" =~ "refs/tags/" ]; then
+    if [ -z $version ] && [[ "$GITHUB_REF" =~ "refs/tags/" ]]; then
       version=$(echo ${GITHUB_REF##*/} | xargs)
     fi
     if [ -z $version ] && [ -n $DRONE_BRANCH ] ; then
       version=$(echo $DRONE_BRANCH | xargs)
     fi
-    if [ -z $version ] && [ -n "$GITHUB_REF" =~ "refs/heads/"]; then
+    if [ -z $version ] && [[ "$GITHUB_REF" =~ "refs/heads/" ]]; then
       version=$(echo ${GITHUB_REF##*/} | xargs)
     fi
     if [ -z $version ] ; then
