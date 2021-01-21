@@ -54,14 +54,23 @@ name_version() {
     if [ -n "$CIRCLE_PULL_REQUEST" ] ; then
       version=pr${CIRCLE_PULL_REQUEST##*/}
     fi
+    if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+      version=pr${CIRCLE_PULL_REQUEST}
+    fi
     if [ -z $version ] ; then
       version=$(echo $DRONE_TAG | xargs)
     fi
     if [ -z $version ] ; then
       version=$(echo $CIRCLE_TAG | xargs)
     fi
+    if [ -z $version ] && [ "$GITHUB_REF" =~ "refs/tags/" ]; then
+      version=$(echo ${GITHUB_REF##*/} | xargs)
+    fi
     if [ -z $version ] && [ -n $DRONE_BRANCH ] ; then
       version=$(echo $DRONE_BRANCH | xargs)
+    fi
+    if [ -z $version ] && [ -n "$GITHUB_REF" =~ "refs/heads/"]; then
+      version=$(echo ${GITHUB_REF##*/} | xargs)
     fi
     if [ -z $version ] ; then
       version=$(git branch | grep '\*' | awk '{print $2}')
