@@ -19,4 +19,11 @@ jobs:
     - name: Build a local container image
       run: |
         ./containerize.sh 
-    - run: ./containerize.sh -q
+    - name: Use image to show tag
+      run: |
+        t=$(./containerize.sh -q)
+        docker run --rm --init -v $PWD:$PWD --workdir=$PWD $t -q
+    - name: Use image to scan itself
+      run: |
+        t=$(./containerize.sh -q)
+        docker run --rm --init -v $PWD:$PWD --workdir=$PWD -v /var/run/docker.sock:/var/run/docker.sock $t -s
