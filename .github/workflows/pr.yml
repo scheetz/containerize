@@ -1,0 +1,22 @@
+name: Docker Image CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: '*'
+
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install jq
+      run: |
+        sudo apt-get update
+        sudo apt-get install --yes jq
+    - name: Build a local container image
+      run: |
+        ./containerize.sh 
+    - run: ./containerize.sh -q
