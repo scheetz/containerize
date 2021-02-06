@@ -14,7 +14,7 @@ show_help() {
 }
 
 sanitize() {
-    echo $1 | sed -e 's/(//g' -e 's/#/__/g' -e 's/ /--/g' | tr '[:upper:]' '[:lower:]' | xargs
+    echo $1 | sed -e 's/(//g' -e 's/#/__/g' -e 's/ /--/g' -e 's/^[._]*//' -e 's|/[._]*|/|g' | tr '[:upper:]' '[:lower:]' | xargs
 }
 
 name_repo() {
